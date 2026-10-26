@@ -1016,8 +1016,8 @@ default members:
   same (=🔒2 ✅ 42%=, one tooltip line each).  A lone =working= root without a
   percentage animates via [[https://github.com/Malabarba/spinner.el][spinner.el]] when it is installed
   (=ghostel-spinner-type=; nil shows the plain =⏳=).  The labels come from
-  =ghostel-status-mode-line-labels=, which the global indicator and the
-  picker annotations use too.  The default =emoji= falls back to =words=
+  =ghostel-status-mode-line-labels=, which the global indicator, the
+  picker annotations and the terminal list use too.  The default =emoji= falls back to =words=
   when the selected frame cannot display the emoji (a tty cannot be
   probed, so set =words= there).  =words= gives =[blocked: permission ×2]
   [done] [42%]=.  An alist gives your own labels, keyed by state, by the
@@ -1091,6 +1091,43 @@ The two functions underneath, =ghostel-status-buffers= (attention terminals
 most urgent first) and =ghostel-status-buffer-state= (a terminal's most urgent
 such state), are the API for your own tools; both take an optional list of
 states in place of =ghostel-status-notify-states=.
+
+*** Terminal list
+:properties:
+:custom_id: terminal-list
+:end:
+#+findex: ghostel-terminal-list
+
+=M-x ghostel-terminal-list= shows every terminal in one place, under a heading
+with its number (dimmed), its name, padded to =ghostel-terminal-list-name-width=
+(16) columns so titles line up, its title and the last component of its
+directory, led by its host for a remote terminal (face
+=ghostel-terminal-list-directory=), then its records, most urgent first (then the
+longest waiting).  It opens with point on the most urgent terminal, at the top.
+A child record (=build/test=) is indented under its nearest existing ancestor,
+leaving out its app when the parent has the same one, and each record's
+message, all of its lines, sits below it.  Each record leads with its label
+from =ghostel-status-mode-line-labels=, as in its terminal's mode line (a state
+without a label shows its name):
+#+begin_example
+1 *ghostel: deploy*  shop
+  ⏳  deploy  Rollout v2.4.1  3m
+      Deploying
+    🔒  eu-west  12s
+        Approve the eu-west rollout?
+#+end_example
+It updates as records change.  =n= / =p= move between terminals, =f= / =b=
+also stop at each record, =RET= switches to the terminal (closing a window the
+list popped up, so the terminal shows where you opened the list), =o= shows it
+in another window, =M-1= … =M-9= switch to the terminal of that number, =N= runs
+=ghostel-status-next=.  =TAB= / =S-TAB= move between the terminal names and
+directories, which are buttons: clicking a name switches to its terminal and
+clicking a directory opens it in Dired (=RET= on them does the same).  =t= switches between every terminal (those without
+records as =no status=) and only the terminals that need you, with all their
+records for context; =ghostel-terminal-list-attention-only= picks the view a new
+terminal list opens with.  =d= shows each whole directory on its own line below
+the records.  =?= shows a terse list of these keys above the terminals, or hides
+it again.  Ages count from the first time you open the list.
 
 ** Color palette
 :properties:
@@ -1558,16 +1595,19 @@ tables below group them by area; defaults shown are the out-of-the-box values.
 
 ** Notifications and progress
 
-| Variable                            | Default                      | Description                                                     |
-|-------------------------------------+------------------------------+-----------------------------------------------------------------|
-| =ghostel-notification-functions=      | =(ghostel-default-notify)=     | Hook for OSC 9 / OSC 777 and program status notifications.      |
-| =ghostel-bell-functions=              | =(ghostel-ding)=               | Hook for the terminal bell.                                     |
-| =ghostel-program-status-functions=    | mode line and notify members | Hook for OSC 7501 / OSC 9;4 status records, =(ID OLD NEW)=.       |
-| =ghostel-status-notify-states=        | =(blocked done error)=         | Attention states: notify, =ghostel-status-next= and pickers.      |
-| =ghostel-status-indicator-states=     | =(blocked done error working)= | States =ghostel-status-indicator-mode= counts terminals in.       |
-| =ghostel-status-auto-acknowledge=     | =input=                        | Drop done and error records on =input=, when =seen=, or never.      |
-| =ghostel-status-mode-line-labels=     | =emoji=                        | =emoji=, =words= or an alist of =format-spec= labels.                 |
-| =ghostel-spinner-type=                | =progress-bar=                 | Spinner while working without a percentage; nil for plain text. |
+| Variable                              | Default                      | Description                                                     |
+|---------------------------------------+------------------------------+-----------------------------------------------------------------|
+| =ghostel-notification-functions=        | =(ghostel-default-notify)=     | Hook for OSC 9 / OSC 777 and program status notifications.      |
+| =ghostel-bell-functions=                | =(ghostel-ding)=               | Hook for the terminal bell.                                     |
+| =ghostel-program-status-functions=      | mode line and notify members | Hook for OSC 7501 / OSC 9;4 status records, =(ID OLD NEW)=.       |
+| =ghostel-status-notify-states=          | =(blocked done error)=         | Attention states: notify, =ghostel-status-next= and pickers.      |
+| =ghostel-status-indicator-states=       | =(blocked done error working)= | States =ghostel-status-indicator-mode= counts terminals in.       |
+| =ghostel-status-auto-acknowledge=       | =input=                        | Drop done and error records on =input=, when =seen=, or never.      |
+| =ghostel-status-mode-line-labels=       | =emoji=                        | =emoji=, =words= or an alist of =format-spec= labels.                 |
+| =ghostel-spinner-type=                  | =progress-bar=                 | Spinner while working without a percentage; nil for plain text. |
+| =ghostel-terminal-list-attention-only=  | =nil=                          | A new terminal list shows only terminals that need you.         |
+| =ghostel-terminal-list-full-directory=  | =nil=                          | A new terminal list shows whole directories below the records.  |
+| =ghostel-terminal-list-name-width=      | =16=                           | Columns a terminal list heading pads the terminal name to.      |
 
 ** Input and interaction
 
@@ -2232,6 +2272,7 @@ to your config.
 | =M-x ghostel-shell-command=            | =async-shell-command= in a ghostel terminal (see [[#shell-commands][Shell commands]]).     |
 | =M-x ghostel-status-next=              | Switch to the next terminal needing attention, most urgent first.         |
 | =M-x ghostel-status-indicator-mode=    | Count terminals by program status in every mode line.                     |
+| =M-x ghostel-terminal-list=            | List every terminal with its program status, most urgent first.           |
 | =M-x ghostel-status-acknowledge=       | Drop the done and error records of the current terminal.                  |
 | =M-x ghostel-clear=                    | Clear the visible screen, keeping scrollback.                             |
 | =M-x ghostel-clear-scrollback=         | Clear screen and scrollback.                                              |
