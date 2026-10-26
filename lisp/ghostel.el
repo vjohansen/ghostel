@@ -46,6 +46,8 @@
 ;;       ghostel-project-list-buffers
 ;;                             Same, scoped to the current project
 ;;   M-x ghostel-status-next   Switch to the next terminal needing attention
+;;   M-x ghostel-terminal-list
+;;                             Every terminal and its program status
 ;;
 ;; Key bindings in the terminal buffer:
 ;;
@@ -830,6 +832,7 @@ to nil to disable the regex fallback entirely (OSC 133 only)."
 (autoload 'ghostel--bookmark-handler "ghostel-bookmark")
 (autoload 'ghostel-desktop-save-buffer "ghostel-desktop")
 (autoload 'ghostel-desktop-restore-buffer "ghostel-desktop")
+(autoload 'ghostel-terminal-list "ghostel-terminal-list" nil t)
 
 ;; Restore desktop-saved terminals; loads ghostel-desktop.el lazily on use.
 (add-to-list 'desktop-buffer-mode-handlers
@@ -1486,7 +1489,8 @@ A child map, so `ghostel-menu' is not also active via the local map.")
     ["New Project Terminal" ghostel-project-new]
     ["Next Terminal" ghostel-next]
     ["Previous Terminal" ghostel-previous]
-    ["List Terminals" ghostel-list-buffers]
+    ["Switch to Terminal..." ghostel-list-buffers]
+    ["Terminal List" ghostel-terminal-list]
     ["Next Needing Attention" ghostel-status-next]
     "--"
     ["Sync Theme" ghostel-sync-theme]
