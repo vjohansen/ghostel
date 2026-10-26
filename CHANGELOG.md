@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- `ghostel-terminal-list` shows every terminal under a numbered heading
+  with its title and the last component of its directory, led by its
+  host for a remote terminal (face `ghostel-terminal-list-directory`),
+  then its program status records, most urgent first, opening on the
+  most urgent terminal.  Each child record is indented under its
+  nearest existing ancestor with its whole message below it, and leaves
+  out its app when its parent has the same one.  The list updates live;
+  `M-1` … `M-9` switch to the terminal of that number; `TAB` moves
+  between the terminal names and directories, a click on a directory
+  opening it in Dired; `t` toggles
+  between all terminals and only those that need you
+  (`ghostel-terminal-list-attention-only` picks the starting view);
+  `d` toggles between the last component of each directory and the
+  whole directory on its own line below the terminal's records
+  (`ghostel-terminal-list-full-directory` picks the starting view);
+  `?` shows or hides a terse list of the keys above the terminals.
+  Records lead with their labels from `ghostel-status-mode-line-labels`,
+  as in the terminal's mode line.
+
 ## [0.60.0] — 2026-10-29
 
 ### Added

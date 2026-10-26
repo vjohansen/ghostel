@@ -364,6 +364,13 @@ libghostty reports `clear' for every record on RIS by itself."
 (defvar ghostel-status--spinner-available (locate-library "spinner")
   "Non-nil when spinner.el was on `load-path' at load time.")
 
+(defun ghostel-status--face (state)
+  "Return the face for STATE, or nil."
+  (pcase state
+    ('blocked 'warning)
+    ('error 'error)
+    ('done 'success)))
+
 (defun ghostel-status--describe (entry)
   "Return the message, title or app of the (ID . RECORD) ENTRY, or nil."
   (or (plist-get (cdr entry) :msg)
@@ -407,10 +414,7 @@ TIP is the list of help-echo lines, by default what
                                         (?n . ,count)
                                         (?c . ,(if several count ""))
                                         (?x . ,(if several (format " ×%d" count) ""))))))
-                  'face (pcase state
-                          ('blocked 'warning)
-                          ('error 'error)
-                          ('done 'success))
+                  'face (ghostel-status--face state)
                   'help-echo (and tip (string-join tip "\n"))))))
 
 (defun ghostel-status--labels (items)
