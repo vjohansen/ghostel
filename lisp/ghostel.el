@@ -48,6 +48,8 @@
 ;;   M-x ghostel-status-next   Switch to the next terminal needing attention
 ;;   M-x ghostel-terminal-list
 ;;                             Every terminal and its program status
+;;   M-x ghostel-dabbrev-completion
+;;                             Type a long word from the scrollback
 ;;
 ;; Key bindings in the terminal buffer:
 ;;
@@ -60,6 +62,7 @@
 ;;   C-c C-t   Copy mode          C-c C-y   Paste
 ;;   C-c M-l   Clear scrollback   C-q       Send next key literally
 ;;   C-c M-w   Copy scrollback    C-y / M-y Yank / yank-pop
+;;   C-c TAB   Type a word from the scrollback
 ;;   C-c C-n / C-c C-p            Next/previous hyperlink
 ;;   C-c M-n / C-c M-p            Next/previous prompt (OSC 133)
 ;;
@@ -833,6 +836,7 @@ to nil to disable the regex fallback entirely (OSC 133 only)."
 (autoload 'ghostel-desktop-save-buffer "ghostel-desktop")
 (autoload 'ghostel-desktop-restore-buffer "ghostel-desktop")
 (autoload 'ghostel-terminal-list "ghostel-terminal-list" nil t)
+(autoload 'ghostel-dabbrev-completion "ghostel-dabbrev-completion" nil t)
 
 ;; Restore desktop-saved terminals; loads ghostel-desktop.el lazily on use.
 (add-to-list 'desktop-buffer-mode-handlers
@@ -1263,6 +1267,7 @@ Input modes (`ghostel-semi-char-mode-map', `ghostel-char-mode-map',
   "C-c C-t"          #'ghostel-copy-mode
   "C-c M-w"          #'ghostel-copy-all
   "C-c C-y"          #'ghostel-paste
+  "C-c TAB"          #'ghostel-dabbrev-completion
   "C-c M-l"          #'ghostel-clear-scrollback
   "C-c C-q"          #'ghostel-send-next-key
   ;; Hyperlink navigation (OSC 8, auto-detected URLs, file:line refs)
@@ -1481,6 +1486,7 @@ A child map, so `ghostel-menu' is not also active via the local map.")
      ["Find File at Point" ghostel-find-file-at-point])
     "--"
     ["Paste" ghostel-paste]
+    ["Insert Word from Scrollback..." ghostel-dabbrev-completion]
     ["Copy All" ghostel-copy-all]
     ["Clear Screen" ghostel-clear]
     ["Clear Scrollback" ghostel-clear-scrollback]

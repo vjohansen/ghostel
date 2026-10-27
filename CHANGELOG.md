@@ -24,6 +24,18 @@ All notable changes to this project will be documented in this file.
   Records lead with the symbols in `ghostel-terminal-list-symbols`
   (✋ ❌ ✅ ⏳) and, per blocked kind,
   `ghostel-terminal-list-blocked-symbols` (🔒 🔑 💬).
+- `C-c TAB` (`ghostel-dabbrev-completion`) picks a word from the
+  scrollback with `completing-read`, the lowest first, and types it at
+  the cursor (in line mode, into the input).  Words split like
+  double-click does, so paths and hostnames stay whole, and so do URLs,
+  drive paths (`C:\Users`), `host:/path` and variables (`$HOME/bin`,
+  `$env:PATH`).  Prompts marked by OSC 133 are left out.  Words need a
+  letter or digit and `ghostel-dabbrev-completion-min-length` (3)
+  characters.  A word begun at the cursor (after any `=`, as in
+  `--file=/tmp/x`) is the initial input, only words that start with it
+  are offered, and it is not typed again.  When only one word fits, it
+  is typed without asking.  Minibuffer input matches by the completion
+  category `ghostel-word`, which tries `basic` and then `flex`.
 
 ## [0.60.0] — 2026-10-29
 

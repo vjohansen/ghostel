@@ -452,6 +452,7 @@ Most keys are sent to the terminal.  Keys in =ghostel-keymap-exceptions=
 | =C-y=                | Yank from kill ring (bracketed paste)      |
 | =M-y=                | Yank-pop (cycle through kill ring)         |
 | =C-c C-y=            | Paste from kill ring                       |
+| =C-c TAB=            | Type a word from the scrollback            |
 | =C-c M-l=            | Clear screen and scrollback                |
 | =C-c C-n=            | Jump to next hyperlink                     |
 | =C-c C-p=            | Jump to previous hyperlink                 |
@@ -1696,6 +1697,7 @@ tables below group them by area; defaults shown are the out-of-the-box values.
 | =ghostel-point-leave-input-mode=       | =default=           | Mode to enter when point leaves the input point (isearch/minibuffer): =default=, =copy=, =emacs=, or =nil=.                                                                                                                 |
 | =ghostel-prompt-navigation-input-mode= | =default=           | Mode to enter for prompt navigation (=C-c M-n= / =C-c M-p=, imenu): =default=, =copy=, =emacs=, or =nil=.                                                                                                                       |
 | =ghostel-word-boundary-string=         | (see docstring)   | Characters that terminate words for double-click selection and word motion (mirrors Ghostty's =selection-word-chars=).  Overridden for printable ASCII by =evil-ghostel-word-boundaries= while =evil-ghostel-mode= is on. |
+| =ghostel-dabbrev-completion-min-length= | =3=                | Fewest characters of a word that =ghostel-dabbrev-completion= offers.                                                                                                                                                   |
 | =ghostel-scroll-on-input=              | =t=                 | Jump to the bottom when typing while scrolled into scrollback.                                                                                                                                                      |
 | =ghostel-bold-color=                   | =nil=               | How bold text is colored: =nil=, =bright=, or a =#RRGGBB= string.                                                                                                                                                         |
 
@@ -2262,6 +2264,7 @@ over:
 | =M-x ghostel-line-mode=                | Switch to line input mode.                                                |
 | =M-x ghostel-copy-all=                 | Copy the entire scrollback to the kill ring.                              |
 | =M-x ghostel-paste=                    | Paste from the kill ring.                                                 |
+| =M-x ghostel-dabbrev-completion=       | Type or complete a word from the scrollback at the cursor.                |
 | =M-x ghostel-send-next-key=            | Send the next key literally.                                              |
 | =M-x ghostel-next-prompt=              | Jump to the next shell prompt.                                            |
 | =M-x ghostel-previous-prompt=          | Jump to the previous shell prompt.                                        |
