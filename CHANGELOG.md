@@ -17,6 +17,8 @@ All notable changes to this project will be documented in this file.
   opening it in Dired; `t` toggles
   between all terminals and only those that need you
   (`ghostel-terminal-list-attention-only` picks the starting view);
+  `P` toggles between all terminals and only those in the project of
+  the buffer the list was opened from;
   `d` toggles between the last component of each directory and the
   whole directory on its own line below the terminal's records
   (`ghostel-terminal-list-full-directory` picks the starting view);

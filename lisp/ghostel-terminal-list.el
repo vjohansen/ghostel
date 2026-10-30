@@ -17,6 +17,7 @@
 (require 'cl-lib)
 (require 'subr-x)
 (require 'ghostel)
+(require 'ghostel-project)
 (require 'ghostel-status)
 
 
@@ -166,6 +167,7 @@ wins over its state in `ghostel-terminal-list-symbols'."
     (define-key map (kbd "b") #'ghostel-terminal-list-previous-item)
     (define-key map (kbd "N") #'ghostel-status-next)
     (define-key map (kbd "t") #'ghostel-terminal-list-toggle-attention-only)
+    (define-key map (kbd "P") #'ghostel-terminal-list-toggle-project)
     (define-key map (kbd "d") #'ghostel-terminal-list-toggle-full-directory)
     (define-key map (kbd "?") #'ghostel-terminal-list-toggle-keys)
     (dotimes (i 9)
@@ -179,6 +181,13 @@ wins over its state in `ghostel-terminal-list-symbols'."
 
 (defvar-local ghostel-terminal-list--full-directory nil
   "Non-nil while this terminal list shows each whole directory on its own line.")
+
+(defvar-local ghostel-terminal-list--project-only nil
+  "Non-nil while this terminal list shows only the project's terminals.
+The project is that of `ghostel-terminal-list--directory'.")
+
+(defvar-local ghostel-terminal-list--directory nil
+  "Directory of the buffer this terminal list was last opened from.")
 
 (defvar-local ghostel-terminal-list--show-keys nil
   "Non-nil while this terminal list shows its keys above the terminals.")
@@ -354,6 +363,7 @@ The keys are in the face `help-key-binding', the rest in `shadow'."
 \\[forward-button]/%s button  \
 \\[revert-buffer] refresh
 \\[ghostel-terminal-list-toggle-attention-only] needs you only  \
+\\[ghostel-terminal-list-toggle-project] project  \
 \\[ghostel-terminal-list-toggle-full-directory] full dirs  \
 \\[describe-mode] all keys  \
 \\[ghostel-terminal-list-toggle-keys] hide  \
@@ -368,13 +378,34 @@ The keys are in the face `help-key-binding', the rest in `shadow'."
   (cdr (cl-find-if (lambda (item) (<= (car item) pos))
                    (reverse ghostel-terminal-list--items))))
 
+(defun ghostel-terminal-list--project-root ()
+  "Return the root of the project the list was opened from, or nil."
+  (when-let* ((dir ghostel-terminal-list--directory)
+              (project (let ((default-directory dir))
+                         (project-current))))
+    (project-root project)))
+
+(defun ghostel-terminal-list--project-name (root)
+  "Return the name the terminal list shows for the project at ROOT."
+  (file-name-nondirectory (directory-file-name root)))
+
+(defun ghostel-terminal-list--in-project (bufs root)
+  "Return those of BUFS in the project at ROOT, in order.
+Membership is that of `ghostel-project-buffer-list', so
+`ghostel-project-buffer-scope' applies."
+  (let ((members (let ((default-directory root))
+                   (ghostel-project-buffer-list))))
+    (cl-remove-if-not (lambda (buf) (memq buf members)) bufs)))
+
 (defun ghostel-terminal-list--render (&rest _)
   "Redraw the terminal list, keeping point and each window on its item.
 Terminals come most urgent first, by their most urgent record, then
 those without records by name; only those that need you while
-`ghostel-terminal-list--attention-only'.  They are numbered from 1, the
-numbers M-1 to M-9 visit, right-aligned so the names line up.  While
-`ghostel-terminal-list--show-keys', the keys come first."
+`ghostel-terminal-list--attention-only', and only those in the project
+the list was opened from while `ghostel-terminal-list--project-only'.
+They are numbered from 1, the numbers M-1 to M-9 visit, right-aligned
+so the names line up.  While `ghostel-terminal-list--show-keys', the
+keys come first."
   (let* ((windows (mapcar (lambda (win)
                             (cons win (ghostel-terminal-list--key-at (window-point win))))
                           (get-buffer-window-list nil nil t)))
@@ -391,6 +422,10 @@ numbers M-1 to M-9 visit, right-aligned so the names line up.  While
                  (append with-records
                          (cl-remove-if (lambda (buf) (memq buf with-records))
                                        (ghostel-buffer-list)))))
+         (root (and ghostel-terminal-list--project-only
+                    (ghostel-terminal-list--project-root)))
+         (bufs (if root (ghostel-terminal-list--in-project bufs root) bufs))
+         (name (and root (ghostel-terminal-list--project-name root)))
          (inhibit-read-only t)
          (find (lambda (key)
                  (or (car (rassoc key ghostel-terminal-list--items))
@@ -399,13 +434,17 @@ numbers M-1 to M-9 visit, right-aligned so the names line up.  While
                      (point-min)))))
     (erase-buffer)
     (setq ghostel-terminal-list--items nil)
-    (setq mode-line-process (and ghostel-terminal-list--attention-only " needs you"))
+    (setq mode-line-process
+          (and (or ghostel-terminal-list--attention-only name)
+               (concat (and ghostel-terminal-list--attention-only " needs you")
+                       (and name (format " in %s" name)))))
     (when ghostel-terminal-list--show-keys
       (insert (ghostel-terminal-list--keys-text) "\n\n"))
     (if (null bufs)
-        (insert (propertize (if ghostel-terminal-list--attention-only
-                                "No terminal needs you.\n"
-                              "No ghostel terminals.\n")
+        (insert (propertize (format (if ghostel-terminal-list--attention-only
+                                        "No terminal%s needs you.\n"
+                                      "No ghostel terminals%s.\n")
+                                    (if name (format " in %s" name) ""))
                             'face 'shadow))
       (cl-loop with width = (length (number-to-string (length bufs)))
                for buf in bufs
@@ -434,9 +473,12 @@ and directories, buttons that visit the terminal and open the directory
 in Dired.
 \\[ghostel-terminal-list-toggle-attention-only] switches between all terminals \
 and only
-those that need you.  \\[ghostel-terminal-list-toggle-full-directory] switches \
-between the last component of
-each terminal's directory and the whole directory below its records.
+those that need you, \\[ghostel-terminal-list-toggle-project] between all \
+terminals and only those in the
+project of the buffer the list was opened from.
+\\[ghostel-terminal-list-toggle-full-directory] switches between the last \
+component of each terminal's
+directory and the whole directory below its records.
 \\[ghostel-terminal-list-toggle-keys] shows or hides a terse list of these keys \
 above the terminals.  The
 buffer updates as records change.
@@ -455,6 +497,20 @@ buffer updates as records change.
   (message (if ghostel-terminal-list--attention-only
                "Showing terminals that need you"
              "Showing all terminals")))
+
+(defun ghostel-terminal-list-toggle-project ()
+  "Switch between showing every terminal and only the project's.
+The project is that of the buffer the list was opened from, and
+`ghostel-project-buffer-scope' decides which terminals belong to it."
+  (interactive)
+  (let ((root (or (ghostel-terminal-list--project-root)
+                  (user-error "No current project"))))
+    (setq ghostel-terminal-list--project-only (not ghostel-terminal-list--project-only))
+    (ghostel-terminal-list--render)
+    (if ghostel-terminal-list--project-only
+        (message "Showing terminals in %s"
+                 (ghostel-terminal-list--project-name root))
+      (message "Showing all terminals"))))
 
 (defun ghostel-terminal-list-toggle-full-directory ()
   "Switch between the last component of each directory and the whole one.
@@ -565,13 +621,20 @@ prefix argument."
 (defun ghostel-terminal-list ()
   "Show the program status of every ghostel terminal, most urgent first.
 Point goes to the most urgent terminal, at the top.  Status is tracked
-from the first call on, so ages show for changes after that."
+from the first call on, so ages show for changes after that.  In the
+list, \\<ghostel-terminal-list-mode-map>\\[ghostel-terminal-list-toggle-project] \
+shows only the terminals of the current buffer's project."
   (interactive)
   (ghostel-terminal-list--start)
-  (let ((buf (get-buffer-create ghostel-terminal-list-buffer-name)))
+  (let ((dir (and (not (derived-mode-p 'ghostel-terminal-list-mode))
+                  default-directory))
+        (buf (get-buffer-create ghostel-terminal-list-buffer-name)))
     (with-current-buffer buf
       (unless (derived-mode-p 'ghostel-terminal-list-mode)
         (ghostel-terminal-list-mode))
+      ;; Opened from the list itself, it keeps its project.
+      (when dir
+        (setq ghostel-terminal-list--directory dir))
       (ghostel-terminal-list--render))
     (pop-to-buffer buf)
     (goto-char (or (caar ghostel-terminal-list--items) (point-min)))))

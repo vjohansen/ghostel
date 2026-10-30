@@ -374,8 +374,8 @@ Point stays on its terminal; reopening the list puts it on the first one."
                                        "  N next needing you\n"
                                        "n/p terminal  f/b record  TAB/S-TAB button"
                                        "  g refresh\n"
-                                       "t needs you only  d full dirs  h all keys  ? hide"
-                                       "  q quit\n"
+                                       "t needs you only  P project  d full dirs"
+                                       "  h all keys  ? hide  q quit\n"
                                        "\n"
                                        "1 *ghostel-a*")
                                (ghostel-terminal-list-test--text)))
@@ -467,6 +467,59 @@ Point stays on its terminal; reopening the list puts it on the first one."
     (let ((ghostel-terminal-list-attention-only t))
       (ghostel-terminal-list-test--in-list
         (should (equal "No terminal needs you.\n" (ghostel-terminal-list-test--text)))))))
+
+(ert-deftest ghostel-terminal-list-test-toggle-project ()
+  "The toggle shows only the terminals of the project the list was opened from."
+  (ghostel-terminal-list-test--with-bufs (a b c)
+    (with-current-buffer a (setq default-directory "/shop/"))
+    (with-current-buffer b (setq default-directory "/shop/src/"))
+    (should (eq #'ghostel-terminal-list-toggle-project
+                (lookup-key ghostel-terminal-list-mode-map (kbd "P"))))
+    (cl-letf (((symbol-function 'project-current)
+               (lambda (&optional _maybe-prompt dir)
+                 (when (string-prefix-p "/shop/" (or dir default-directory))
+                   (cons 'transient "/shop/"))))
+              ((symbol-function 'project-root) #'cdr))
+      (with-temp-buffer
+        (setq default-directory "/shop/src/")
+        (ghostel-terminal-list-test--in-list
+          (should-not mode-line-process)
+          (should (string-search "*ghostel-c*" (ghostel-terminal-list-test--text)))
+          (ghostel-terminal-list-toggle-project)
+          (should (equal " in shop" mode-line-process))
+          (should (equal (concat "1 *ghostel-a*       shop\n"
+                                 "  no status\n"
+                                 "\n"
+                                 "2 *ghostel-b*       src\n"
+                                 "  no status\n"
+                                 "\n")
+                         (ghostel-terminal-list-test--text)))
+          ;; With `t' too, only the project's terminals that need you.
+          (ghostel-terminal-list-test--report b "blocked")
+          (ghostel-terminal-list-toggle-attention-only)
+          (should (equal " needs you in shop" mode-line-process))
+          (should (string-prefix-p "1 *ghostel-b*" (ghostel-terminal-list-test--text)))
+          (ghostel-terminal-list-test--report b "clear")
+          (ghostel-terminal-list--refresh)
+          (should (equal "No terminal in shop needs you.\n"
+                         (ghostel-terminal-list-test--text)))
+          (ghostel-terminal-list-toggle-attention-only)
+          ;; Opened again from the list itself, it keeps its project.
+          (ghostel-terminal-list)
+          (should (equal " in shop" mode-line-process))
+          (should-not (string-search "*ghostel-c*" (ghostel-terminal-list-test--text)))
+          (ghostel-terminal-list-toggle-project)
+          (should-not mode-line-process)
+          (should (string-search "*ghostel-c*" (ghostel-terminal-list-test--text)))
+          (ghostel-terminal-list-toggle-project)))
+      ;; With the toggle still on, opened from a buffer in no project, it
+      ;; shows every terminal.
+      (with-temp-buffer
+        (setq default-directory "/c/")
+        (ghostel-terminal-list-test--in-list
+          (should-not mode-line-process)
+          (should (string-search "*ghostel-c*" (ghostel-terminal-list-test--text)))
+          (should-error (ghostel-terminal-list-toggle-project) :type 'user-error))))))
 
 (provide 'ghostel-terminal-list-test)
 ;;; ghostel-terminal-list-test.el ends here

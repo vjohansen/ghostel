@@ -1198,7 +1198,9 @@ directories, which are buttons: clicking a name switches to its terminal and
 clicking a directory opens it in Dired (=RET= on them does the same).  =t= switches between every terminal (those without
 records as =no status=) and only the terminals that need you, with all their
 records for context; =ghostel-terminal-list-attention-only= picks the view a new
-terminal list opens with.  =d= shows each whole directory on its own line below
+terminal list opens with.  =P= switches between every terminal and only those
+in the project of the buffer you opened the list from, as
+=ghostel-project-buffer-scope= decides.  =d= shows each whole directory on its own line below
 the records.  =?= shows a terse list of these keys above the terminals, or hides
 it again.  Ages count from the first time you open the list.
 
